@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkers Game</title>
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --text-color: #ffffff;
+            --board-color-1: #f0d9b5;
+            --board-color-2: #b58863;
+            --piece-color-1: #ff0000;
+            --piece-color-2: #000000; /* Computer pieces are black */
+            --king-color: #ffd700;
+            --reset-color: #ff4d4d;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--primary-color);
+            color: var(--text-color);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--hover-button-color);
+        }
+
+        button.reset {
+            background: var(--reset-color);
+        }
+
+        button.how-to-play {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            gap: 2px;
+            background: var(--board-color-2);
+            padding: 2px;
+            border: 4px solid var(--board-color-2);
+            border-radius: 8px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--board-color-1);
+            cursor: pointer;
+        }
+
+        .cell.dark {
+            background: var(--board-color-2);
+        }
+
+        .piece {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--piece-color-1);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .piece.player2 {
+            background: var(--piece-color-2);
+        }
+
+        .piece.king {
+            background: var(--king-color);
+        }
+
+        .message {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--primary-color);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            text-align: left;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-content button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--reset-color);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background: #ff3333;
+        }
+
+        /* Color Wheel Styles */
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker label {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .board {
+                grid-template-columns: repeat(8, 40px);
+                grid-template-rows: repeat(8, 40px);
+            }
+
+            .cell {
+                width: 40px;
+                height: 40px;
+            }
+
+            .piece {
+                width: 35px;
+                height: 35px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .controls {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Checkers Game</h1>
+    <div class="controls">
+        <button onclick="startGame('two-player')">Two Player</button>
+        <button onclick="startGame('easy-ai')">Easy AI</button>
+        <button onclick="startGame('hard-ai')">Hard AI</button>
+        <button onclick="startGame('extreme-ai')">Extreme AI</button>
+        <button onclick="openModal()" class="how-to-play">How to Play</button>
+        <button onclick="resetGame()" class="reset">Reset</button>
+        <div class="color-picker">
+            <label for="pieceColor">Player Color:</label>
+            <input type="color" id="pieceColor" onchange="changePieceColor()" value="#ff0000">
+        </div>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="message" id="message"></div>
+
+    <!-- How to Play Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button onclick="closeModal()">&times;</button>
+            <h2>How to Play Checkers</h2>
+            <p><strong>Objective:</strong> Capture all of your opponent's pieces or block them so they cannot move.</p>
+            <p><strong>Rules:</strong></p>
+            <ul>
+                <li>Pieces move diagonally forward.</li>
+                <li>If an opponent's piece is adjacent and the space beyond it is empty, you must jump over it and capture it.</li>
+                <li>If you reach the farthest row (the "king row"), your piece is crowned a king and can move both forward and backward.</li>
+                <li>You must make a capture if one is available.</li>
+            </ul>
+            <p><strong>Winning:</strong> The game ends when one player has no remaining pieces or cannot make a move.</p>
+        </div>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const message = document.getElementById('message');
+        const modal = document.getElementById('modal');
+        let gameState = [];
+        let currentPlayer = 1;
+        let selectedPiece = null;
+        let gameMode = 'two-player';
+        let aiDepth = 2; // Depth for AI (Easy: 2, Hard: 4, Extreme: 6)
+        let playerColor = '#ff0000'; // Default player color (red)
+
+        // Initialize the board
+        function initializeBoard() {
+            gameState = Array(8).fill().map(() => Array(8).fill(null));
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if ((row + col) % 2 === 1) {
+                        if (row < 3) gameState[row][col] = { player: 2, king: false };
+                        if (row > 4) gameState[row][col] = { player: 1, king: false };
+                    }
+                }
+            }
+            renderBoard();
+        }
+
+        // Render the board
+        function renderBoard() {
+            board.innerHTML = '';
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    if ((row + col) % 2 === 1) cell.classList.add('dark');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    if (gameState[row][col]) {
+                        const piece = document.createElement('div');
+                        piece.classList.add('piece');
+                        piece.classList.add(`player${gameState[row][col].player}`);
+                        if (gameState[row][col].king) piece.classList.add('king');
+                        if (gameState[row][col].player === 1) {
+                            piece.style.backgroundColor = playerColor;
+                        }
+                        cell.appendChild(piece);
+                    }
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        // Handle cell click
+        function handleCellClick(row, col) {
+            if (selectedPiece) {
+                movePiece(selectedPiece.row, selectedPiece.col, row, col);
+                selectedPiece = null;
+            } else if (gameState[row][col] && gameState[row][col].player === currentPlayer) {
+                selectedPiece = { row, col };
+            }
+            renderBoard();
+        }
+
+        // Move a piece
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            const piece = gameState[fromRow][fromCol];
+            if (!piece || !isValidMove(fromRow, fromCol, toRow, toCol)) return;
+
+            gameState[toRow][toCol] = piece;
+            gameState[fromRow][fromCol] = null;
+
+            // Check for king
+            if ((toRow === 0 && piece.player === 1) || (toRow === 7 && piece.player === 2)) {
+                piece.king = true;
+            }
+
+            // Check for captures
+            const midRow = (fromRow + toRow) / 2;
+            const midCol = (fromCol + toCol) / 2;
+            if (Math.abs(fromRow - toRow) === 2) {
+                gameState[midRow][midCol] = null;
+            }
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            checkGameOver();
+            if (gameMode !== 'two-player' && currentPlayer === 2) {
+                makeAIMove(); // AI moves immediately
+            }
+        }
+
+        // Check if a move is valid
+        function isValidMove(fromRow, fromCol, toRow, toCol) {
+            const piece = gameState[fromRow][fromCol];
+            if (!piece) return false;
+
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+
+            // Check direction for non-king pieces
+            if (!piece.king && ((piece.player === 1 && rowDiff > 0) || (piece.player === 2 && rowDiff < 0))) {
+                return false;
+            }
+
+            // Check if the move is diagonal
+            if (Math.abs(rowDiff) !== Math.abs(colDiff)) return false;
+
+            // Check if the destination is empty
+            if (gameState[toRow][toCol]) return false;
+
+            // Check for captures
+            if (Math.abs(rowDiff) === 2) {
+                const midRow = (fromRow + toRow) / 2;
+                const midCol = (fromCol + toCol) / 2;
+                const midPiece = gameState[midRow][midCol];
+                if (!midPiece || midPiece.player === piece.player) return false;
+            }
+
+            return true;
+        }
+
+        // Check if the game is over
+        function checkGameOver() {
+            const player1Pieces = gameState.flat().filter(p => p && p.player === 1).length;
+            const player2Pieces = gameState.flat().filter(p => p && p.player === 2).length;
+
+            if (player1Pieces === 0) {
+                message.innerText = 'Player 2 Wins!';
+            } else if (player2Pieces === 0) {
+                message.innerText = 'Player 1 Wins!';
+            }
+        }
+
+        // Start a new game
+        function startGame(mode) {
+            gameMode = mode;
+            currentPlayer = 1;
+            selectedPiece = null;
+            initializeBoard();
+            message.innerText = '';
+        }
+
+        // Reset the game
+        function resetGame() {
+            startGame(gameMode);
+        }
+
+        // Change player piece color
+        function changePieceColor() {
+            playerColor = document.getElementById('pieceColor').value;
+            renderBoard();
+        }
+
+        // Open How to Play modal
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        // Close How to Play modal
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // AI Move
+        function makeAIMove() {
+            let bestMove = null;
+            if (gameMode === 'easy-ai') {
+                bestMove = getRandomMove();
+            } else {
+                bestMove = getBestMove(aiDepth);
+            }
+            if (bestMove) {
+                movePiece(bestMove.fromRow, bestMove.fromCol, bestMove.toRow, bestMove.toCol);
+            }
+        }
+
+        // Get a random move for Easy AI
+        function getRandomMove() {
+            const moves = getAllMoves(2);
+            return moves[Math.floor(Math.random() * moves.length)];
+        }
+
+        // Get the best move using Minimax with Alpha-Beta Pruning
+        function getBestMove(depth) {
+            const moves = getAllMoves(2);
+            let bestScore = -Infinity;
+            let bestMove = null;
+
+            for (const move of moves) {
+                const newState = simulateMove(gameState, move);
+                const score = minimax(newState, depth - 1, -Infinity, Infinity, false);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            return bestMove;
+        }
+
+        // Minimax algorithm with Alpha-Beta Pruning
+        function minimax(state, depth, alpha, beta, maximizingPlayer) {
+            if (depth === 0 || isGameOver(state)) {
+                return evaluateBoard(state);
+            }
+
+            const player = maximizingPlayer ? 2 : 1;
+            const moves = getAllMoves(player, state);
+
+            if (maximizingPlayer) {
+                let maxEval = -Infinity;
+                for (const move of moves) {
+                    const newState = simulateMove(state, move);
+                    const eval = minimax(newState, depth - 1, alpha, beta, false);
+                    maxEval = Math.max(maxEval, eval);
+                    alpha = Math.max(alpha, eval);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                                for (const move of moves) {
+                    const newState = simulateMove(state, move);
+                    const eval = minimax(newState, depth - 1, alpha, beta, true);
+                    minEval = Math.min(minEval, eval);
+                    beta = Math.min(beta, eval);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+
+        // Evaluate the board for the AI
+        function evaluateBoard(state) {
+            let score = 0;
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = state[row][col];
+                    if (piece) {
+                        const pieceValue = piece.king ? 3 : 1;
+                        if (piece.player === 2) {
+                            score += pieceValue;
+                        } else {
+                            score -= pieceValue;
+                        }
+                    }
+                }
+            }
+            return score;
+        }
+
+        // Check if the game is over
+        function isGameOver(state) {
+            const player1Pieces = state.flat().filter(p => p && p.player === 1).length;
+            const player2Pieces = state.flat().filter(p => p && p.player === 2).length;
+            return player1Pieces === 0 || player2Pieces === 0;
+        }
+
+        // Get all possible moves for a player
+        function getAllMoves(player, state = gameState) {
+            const moves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = state[row][col];
+                    if (piece && piece.player === player) {
+                        const pieceMoves = getValidMoves(row, col, state);
+                        for (const move of pieceMoves) {
+                            moves.push({ fromRow: row, fromCol: col, toRow: move.row, toCol: move.col });
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        // Get valid moves for a piece
+        function getValidMoves(row, col, state) {
+            const piece = state[row][col];
+            if (!piece) return [];
+
+            const moves = [];
+            const directions = piece.king ? [
+                { row: -1, col: -1 }, { row: -1, col: 1 },
+                { row: 1, col: -1 }, { row: 1, col: 1 }
+            ] : (piece.player === 1 ? [
+                { row: -1, col: -1 }, { row: -1, col: 1 }
+            ] : [
+                { row: 1, col: -1 }, { row: 1, col: 1 }
+            ]);
+
+            for (const dir of directions) {
+                const newRow = row + dir.row;
+                const newCol = col + dir.col;
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    if (!state[newRow][newCol]) {
+                        moves.push({ row: newRow, col: newCol });
+                    } else if (state[newRow][newCol].player !== piece.player) {
+                        const jumpRow = newRow + dir.row;
+                        const jumpCol = newCol + dir.col;
+                        if (jumpRow >= 0 && jumpRow < 8 && jumpCol >= 0 && jumpCol < 8 && !state[jumpRow][jumpCol]) {
+                            moves.push({ row: jumpRow, col: jumpCol });
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        // Simulate a move on the board
+        function simulateMove(state, move) {
+            const newState = JSON.parse(JSON.stringify(state)); // Deep copy
+            const piece = newState[move.fromRow][move.fromCol];
+            newState[move.toRow][move.toCol] = piece;
+            newState[move.fromRow][move.fromCol] = null;
+
+            // Check for captures
+            const rowDiff = move.toRow - move.fromRow;
+            const colDiff = move.toCol - move.fromCol;
+            if (Math.abs(rowDiff) === 2) {
+                const midRow = move.fromRow + rowDiff / 2;
+                const midCol = move.fromCol + colDiff / 2;
+                newState[midRow][midCol] = null;
+            }
+
+            // Check for king
+            if ((move.toRow === 0 && piece.player === 1) || (move.toRow === 7 && piece.player === 2)) {
+                piece.king = true;
+            }
+
+            return newState;
+        }
+
+        // Start the game
+        startGame('two-player');
+    </script>
+</body>
+</html>
